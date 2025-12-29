@@ -1,9 +1,10 @@
 # To-Do-List
 
 <실행법>
-1. 가상환경 켜기 -> venv/Scripts 폴더로 들어감
-2. Scripts 폴더 안에서 activate 명령어 실행
-3. todoproject 폴더 안에서 python manage.py runserver로 파일 실행
+1. 가상환경 설치 -> python -m venv venv
+2. 가상환경 켜기 -> venv/Scripts 폴더로 들어감
+3. Scripts 폴더 안에서 activate 명령어 실행
+4. todoproject 폴더 안에서 python manage.py runserver로 파일 실행
 
 <다르게 한점>
 1. to do 부분을 클릭시 수정, 삭제 기능
