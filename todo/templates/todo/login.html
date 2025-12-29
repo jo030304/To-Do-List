@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - To Do List</title>
+    
+    <!-- Font Awesome 추가 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #FBFCFD 0%, #D9EAFD 80%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 12vh;
+        }
+        
+        .container {
+            text-align: center;
+            width: 400px;
+        }
+        
+        h1 {
+            color: #225A98;
+            font-size: 96px;
+            margin-bottom: 5rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+            white-space: nowrap;
+        }
+        
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .input-group {
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            color: #333;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            background-color: #F3F9FF;
+            font-size: 1rem;
+            outline: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            box-shadow: 0 2px 8px rgba(34, 90, 152, 0.2);
+        }
+        
+        .btn {
+            width: 160px;
+            padding: 0.85rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            background-color: #225A98;
+            color: white;
+            margin: 1rem auto 0;
+            margin-top: 5rem;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #1565c0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+        }
+        
+        .error-message {
+            color: #d32f2f;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+        
+        /* 모달 스타일 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 350px;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #2196f3;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            color: #225A98;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        
+        .modal-message {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .modal-btn {
+            width: 120px;
+            padding: 0.8rem;
+            background-color: #225A98;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .modal-btn:hover {
+            background-color: #1565c0;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>To Do List</h1>
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="input-group">
+                <label for="username">아이디</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="password">패스워드</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn">로그인</button>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="error-message">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        </form>
+    </div>
+    
+    <!-- 로그인 성공 모달 -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <!-- Font Awesome 아이콘 -->
+            <i class="fa-solid fa-circle-user modal-icon"></i>
+            <h2 class="modal-title">로그인 성공!</h2>
+            <p class="modal-message">
+                환영합니다!<br>
+                할 일 목록으로 이동합니다.
+            </p>
+            <button class="modal-btn" onclick="goToTodos()">확인</button>
+        </div>
+    </div>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true') {
+            document.getElementById('successModal').classList.add('show');
+        }
+        
+        function goToTodos() {
+            window.location.href = "{% url 'todo_list' %}";
+        }
+    </script>
+</body>
+</html>

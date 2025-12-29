@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To Do List</title>
+    
+    <!-- Font Awesome 추가 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 2rem;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0F171F;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .logout-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        
+        .logout-link:hover {
+            color: #333;
+            text-decoration: underline;
+        }
+        .board-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            max-width: 1200px;
+            align-items: start;
+        }
+
+        .todo-board {
+            background: #D9EAFD;
+            border-radius: 50px;
+            padding: 1.5rem;
+            min-height: 300px;  /* ← auto로 변경 가능 */
+        }
+        
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;  /* ← 1rem에서 0.6rem으로 */
+            padding-bottom: 0.5rem;  /* ← 0.8rem에서 0.5rem으로 */
+            border-bottom: 2px solid #225A98;
+            box-shadow: 0 2px 4px rgba(34, 90, 152, 0.15);
+            background: transparent;
+        }
+        
+        .board-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #151B22;
+        }
+        
+        .add-btn {
+            background-color: transparent;
+            border: 2px solid #3C70A9;
+            color: #3C70A9;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 22px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .add-btn:hover {
+            background-color: rgba(60, 112, 169, 0.12);
+            transform: scale(1.05);
+        }
+        
+        .todo-list {
+            list-style: none;
+        }
+        
+        .todo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.7rem;  /* ← 위아래 패딩 줄임 */
+            color: #333;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .todo-item:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .todo-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.3rem;  /* ← 0.8rem에서 0.3rem으로 줄임 */
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .todo-deadline {
+            font-size: 0.75rem;  /* ← 0.8rem에서 0.75rem으로 */
+            color: #999;
+            margin-top: 0;  /* ← 0.2rem에서 0으로 */
+        }
+
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #1565c0;
+            border-radius: 50%;
+            cursor: pointer;
+            background: transparent;
+            transition: all 0.3s;
+            flex-shrink: 0;
+            align-self: center;  /* ← flex-start에서 center로 변경 */
+            margin-top: 0.3rem;  /* ← 추가: 약간 아래로 */
+        }
+        
+        .todo-checkbox.checked {
+            background-color: #1565c0;
+            position: relative;
+        }
+        
+        .todo-checkbox.checked::after {
+            content: "✓";  /* ← 더 반듯한 체크 기호 */
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.9rem;  /* ← 0.8rem에서 0.9rem으로 */
+            font-weight: bold;  /* ← 추가: 굵게 */
+        }
+        
+        .todo-text {
+            flex: 1;
+        }
+        
+        .todo-text.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+        
+        /* 모달 오버레이 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0);  /* ← 0으로 변경 */
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;  /* ← 이 줄 추가 */
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            background-color: rgba(0, 0, 0, 0.3);  /* ← 이 줄 추가 */
+        }
+
+        /* 추가 모달 */
+        .add-todo-modal {
+            background: white;
+            border-radius: 12px;
+            width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            animation: modalSlideIn 0.3s ease-out;
+            position: relative;
+            border: 2px solid #225A98;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close-btn-top {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: #ff5252;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .close-btn-top:hover {
+            opacity: 0.7;
+        }
+
+        .add-todo-modal .modal-body {
+            padding: 2rem;
+            background-color: #F3F9FF;
+            color: #225A98;
+            border-radius: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 1.8rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: #0F171F;
+            font-size: 1.05rem;
+            margin-bottom: 0.8rem;
+            font-weight: 500;
+            position: relative;
+            padding-left: 1.2rem;
+        }
+
+        .form-group label::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #225A98;
+            font-size: 1.3rem;
+            line-height: 0.95rem;
+        }
+
+        .input-box {
+            background-color: #E7F2FF;
+            border-radius: 8px;
+            padding: 0.3rem;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            background-color: #E7F2FF;
+            cursor: text;
+        }
+
+        .date-input {
+            cursor: default;
+        }
+
+        .date-input::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+        }
+
+        .date-input:invalid {
+            color: #999;
+        }
+
+        .date-input:valid {
+            color: #333;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 2.5rem;
+        }
+
+        .cancel-link,
+        .submit-link {
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .cancel-link {
+            color: #999;
+        }
+
+        .cancel-link:hover {
+            color: #666;
+        }
+
+        .submit-link {
+            color: #4a90e2;
+            font-weight: 500;
+        }
+
+        .submit-link:hover {
+            color: #357abd;
+            text-decoration: underline;
+        }
+
+        /* 상세 모달 */
+        .detail-modal {
+            background: white;
+            border-radius: 12px;
+            width: 450px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            border: 2px solid #225A98;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;  /* ← 이 줄 추가 */
+        }
+
+        .detail-body {
+            padding: 2rem;
+            background-color: #F3F9FF;
+            border-radius: 0;  /* ← 0으로 변경 */
+        }
+
+        .detail-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .category-badge {
+            display: inline-block;
+            background-color: #225A98;
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-section label {
+            display: block;
+            color: #0F171F;
+            font-size: 0.95rem;
+            margin-bottom: 0.8rem;
+            font-weight: 500;
+            position: relative;
+            padding-left: 1.2rem;
+        }
+
+        .detail-section label::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #225A98;
+            font-size: 1.3rem;
+            line-height: 0.95rem;
+        }
+
+        .detail-section .date-input {
+            cursor: default;
+            color: #333;
+        }
+
+        .detail-section .date-input::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+        }
+
+        .detail-input-box {
+            background-color: #E7F2FF;
+            border-radius: 8px;
+            padding: 0.3rem;
+        }
+
+        .detail-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            background-color: transparent;
+        }
+
+        .detail-date {
+            color: #666;
+            font-size: 0.9rem;
+            padding: 0.5rem 0;
+        }
+
+        .detail-footer {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 2rem;
+        }
+
+        .detail-btn {
+            flex: 1;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .detail-btn-primary {
+            background-color: #225A98;
+            color: white;
+        }
+
+        .detail-btn-primary:hover {
+            background-color: #1a4777;
+        }
+
+        .detail-btn-secondary {
+            background-color: #f5f5f5;
+            color: #d32f2f;
+        }
+
+        .detail-btn-secondary:hover {
+            background-color: #ffebee;
+        }
+
+        /* 삭제 확인 모달 */
+        .delete-confirm-modal {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            animation: modalSlideIn 0.3s ease-out;  /* ← 이 줄 추가 */
+        }
+
+        .delete-confirm-modal h3 {
+            color: #333;
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .delete-confirm-modal p {
+            color: #999;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        /* 로그아웃 모달 */
+        .logout-modal .modal {
+            text-align: center;
+            min-width: 350px;
+            padding: 2rem;
+            border-radius: 12px;
+            background: white;
+            animation: modalSlideIn 0.3s ease-out;  /* ← 이 줄 추가 */
+        }
+
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #ff9800;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #225A98;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .modal-message {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+        }
+
+        .modal-btn {
+            padding: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .modal-btn-primary {
+            background-color: #225A98;
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background-color: #1a4777;
+        }
+
+        .modal-btn-secondary {
+            background-color: #f5f5f5;
+            color: #666;
+            border: 1px solid #e0e0e0;
+        }
+
+        .modal-btn-secondary:hover {
+            background-color: #e8e8e8;
+        }
+
+        .modal-btn-danger {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        .modal-btn-danger:hover {
+            background-color: #b71c1c;
+        }
+
+        /* 카테고리 선택 모달 */
+        .category-modal {
+            background: white;
+            border-radius: 12px;
+            width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            border: 2px solid #225A98;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .category-body {
+            padding: 2rem;
+            background-color: #F3F9FF;
+        }
+
+        .category-body h3 {
+            color: #225A98;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .category-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .category-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background-color: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .category-option:hover {
+            border-color: #225A98;
+            background-color: #f0f7ff;
+            transform: translateY(-2px);
+        }
+
+        .category-option i {
+            font-size: 1.5rem;
+            color: #225A98;
+        }
+
+        .category-option span {
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>To Do List</h1>
+        <div class="user-info">
+            <i class="fa-solid fa-user"></i>
+            <span>홍길동님</span>
+            <span>/</span>
+            <span class="logout-link" onclick="showLogoutModal()">로그아웃</span>
+        </div>
+    </div>
+    
+    <div class="board-container">
+        <!-- To Do 보드 -->
+        <div class="todo-board">
+            <div class="board-header">
+                <h2 class="board-title">to do</h2>
+                <button class="add-btn" onclick="openModal('todo')">+</button>
+            </div>
+            <ul class="todo-list">
+                {% for todo in todos_todo %}
+                    <li class="todo-item" onclick="openDetailModal({{ todo.id }}, '{{ todo.title }}', 'TO DO', '{{ todo.deadline|date:'Y-m-d'|default:'' }}')">
+                        <div class="todo-content">
+                            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                <div>
+                                    <div class="todo-text">{{ todo.title }}</div>
+                                    {% if todo.deadline %}
+                                        <div class="todo-deadline">{{ todo.deadline|date:'Y.m.d' }} 까지</div>
+                                    {% endif %}
+                                </div>
+                                <div class="todo-checkbox" onclick="event.stopPropagation(); toggleTodo({{ todo.id }}, 'todo')"></div>  <!-- ← 'todo' 추가 -->
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- End To Do 보드 -->
+        <div class="todo-board">
+            <div class="board-header">
+                <h2 class="board-title">end to do</h2>
+            </div>
+            <ul class="todo-list">
+                {% for todo in todos_end %}
+                    <li class="todo-item" onclick="openDetailModal({{ todo.id }}, '{{ todo.title }}', 'END TO DO', '{{ todo.deadline|date:'Y-m-d'|default:'' }}')">
+                        <div class="todo-content">
+                            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                <div>
+                                    <div class="todo-text">{{ todo.title }}</div>
+                                    <!-- ← 날짜 부분 삭제 -->
+                                </div>
+                                <div class="todo-checkbox checked" onclick="event.stopPropagation(); toggleTodo({{ todo.id }}, 'end')"></div>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Not End To Do 보드 -->
+        <div class="todo-board">
+            <div class="board-header">
+                <h2 class="board-title">not end to do</h2>
+            </div>
+            <ul class="todo-list">
+                {% for todo in todos_not %}
+                    <li class="todo-item" onclick="openDetailModal({{ todo.id }}, '{{ todo.title }}', 'NOT END TO DO', '{{ todo.deadline|date:'Y-m-d'|default:'' }}')">
+                        <div class="todo-content">
+                            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                <div>
+                                    <div class="todo-text completed">{{ todo.title }}</div>
+                                    <!-- ← 날짜 부분 삭제 -->
+                                </div>
+                                <div class="todo-checkbox" onclick="event.stopPropagation(); toggleTodo({{ todo.id }}, 'not')"></div>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    
+    <!-- 할 일 추가 모달 -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal add-todo-modal">
+            <button class="close-btn-top" onclick="closeModal()">&times;</button>
+            
+            <div class="modal-body">
+                <form method="POST" id="addForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create">
+                    <input type="hidden" name="category" id="categoryInput">
+                    
+                    <div class="form-group">
+                        <label>TO DO 입력</label>
+                        <div class="input-box">
+                            <input type="text" name="title" class="modal-input" placeholder="" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>TO DO 기한 설정</label>
+                        <div class="input-box">
+                            <input type="date" name="deadline" class="modal-input date-input">
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="cancel-link" onclick="closeModal()">취소</button>
+                        <button type="submit" class="submit-link">저장 후 닫기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 할 일 상세 모달 -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal detail-modal">
+            <button class="close-btn-top" onclick="closeDetailModal()">&times;</button>
+            
+            <div class="detail-body">
+                <div class="detail-header">
+                    <span class="category-badge" id="detailCategory">TO DO</span>
+                </div>
+                
+                <form method="POST" action="{% url 'todo_list' %}" id="detailForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="todo_id" id="detailTodoId">
+                    
+                    <div class="detail-section">
+                        <label>to do</label>
+                        <div class="detail-input-box">
+                            <input type="text" name="title" id="detailTitle" class="detail-input" required>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <label>기한</label>
+                        <div class="detail-input-box">  <!-- ← 변경! -->
+                            <input type="date" name="deadline" id="detailDeadlineInput" class="detail-input date-input">
+                        </div>
+                    </div>
+                    
+                    <div class="detail-footer">
+                        <button type="button" class="detail-btn detail-btn-secondary" onclick="confirmDelete()">삭제</button>
+                        <button type="submit" class="detail-btn detail-btn-primary">수정</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 확인 모달 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal delete-confirm-modal">
+            <h3>정말로 삭제하시겠습니까?</h3>
+            <p>삭제한 할일은 복구하기 어렵습니다.</p>
+            <form method="POST" action="{% url 'todo_list' %}">  <!-- ← action 추가! -->
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="todo_id" id="deleteTodoId">
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeDeleteModal()">취소</button>
+                    <button type="submit" class="modal-btn modal-btn-danger">삭제하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 로그아웃 확인 모달 -->
+    <div class="modal-overlay logout-modal" id="logoutModal">
+        <div class="modal">
+            <i class="fa-solid fa-right-from-bracket modal-icon"></i>
+            <h2 class="modal-title">로그아웃</h2>
+            <p class="modal-message">
+                정말 로그아웃 하시겠습니까?
+            </p>
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn modal-btn-secondary" onclick="closeLogoutModal()">취소</button>
+                <button type="button" class="modal-btn modal-btn-primary" onclick="confirmLogout()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리 선택 모달 (체크박스 클릭 시) -->
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal category-modal">
+            <button class="close-btn-top" onclick="closeCategoryModal()">&times;</button>
+            
+            <div class="category-body">
+                <h3>카테고리 변경</h3>
+                <form method="POST" action="{% url 'todo_list' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="change_category">
+                    <input type="hidden" name="todo_id" id="categoryTodoId">
+                    <input type="hidden" id="currentCategory">  <!-- ← 추가: 현재 카테고리 저장 -->
+                    
+                    <div class="category-options">
+                        <button type="submit" name="category" value="todo" class="category-option" id="option-todo">
+                            <i class="fa-regular fa-circle" id="icon-todo"></i>
+                            <span>To Do</span>
+                        </button>
+                        
+                        <button type="submit" name="category" value="end" class="category-option" id="option-end">
+                            <i class="fa-regular fa-circle" id="icon-end"></i>
+                            <span>End To Do</span>
+                        </button>
+                        
+                        <button type="submit" name="category" value="not" class="category-option" id="option-not">
+                            <i class="fa-regular fa-circle" id="icon-not"></i>
+                            <span>Not End To Do</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 추가 모달
+        function openModal(category) {
+            document.getElementById('categoryInput').value = category;
+            document.getElementById('addModal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('addModal').classList.remove('show');
+        }
+
+        // 상세 모달
+        function openDetailModal(todoId, title, category, deadline) {
+            document.getElementById('detailTodoId').value = todoId;
+            document.getElementById('detailTitle').value = title;
+            document.getElementById('detailCategory').textContent = category;
+            
+            // deadline을 input에 직접 설정
+            if (deadline) {
+                document.getElementById('detailDeadlineInput').value = deadline;
+            } else {
+                document.getElementById('detailDeadlineInput').value = '';
+            }
+            
+            document.getElementById('detailModal').classList.add('show');
+        }
+        
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        // 삭제 확인
+        function confirmDelete() {
+            const todoId = document.getElementById('detailTodoId').value;
+            document.getElementById('deleteTodoId').value = todoId;
+            closeDetailModal();
+            document.getElementById('deleteModal').classList.add('show');
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+        }
+        
+        // 로그아웃
+        function showLogoutModal() {
+            document.getElementById('logoutModal').classList.add('show');
+        }
+        
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('show');
+        }
+        
+        function confirmLogout() {
+            window.location.href = "{% url 'logout' %}";
+        }
+
+        // 카테고리 변경 모달
+        function showCategoryModal(todoId, currentCategory) {
+            document.getElementById('categoryTodoId').value = todoId;
+            document.getElementById('currentCategory').value = currentCategory;
+            
+            // 모든 아이콘 초기화
+            document.getElementById('icon-todo').className = 'fa-regular fa-circle';
+            document.getElementById('icon-end').className = 'fa-regular fa-circle';
+            document.getElementById('icon-not').className = 'fa-regular fa-circle';
+            
+            // 모든 옵션 배경 초기화
+            document.getElementById('option-todo').style.backgroundColor = 'white';
+            document.getElementById('option-end').style.backgroundColor = 'white';
+            document.getElementById('option-not').style.backgroundColor = 'white';
+            
+            // 현재 카테고리에 체크 표시
+            console.log('Current category:', currentCategory);  // 디버깅
+            
+            if (currentCategory === 'todo') {
+                document.getElementById('icon-todo').className = 'fa-solid fa-circle-check';
+                document.getElementById('option-todo').style.backgroundColor = '#f0f7ff';
+            } else if (currentCategory === 'end') {
+                document.getElementById('icon-end').className = 'fa-solid fa-circle-check';
+                document.getElementById('option-end').style.backgroundColor = '#f0f7ff';
+            } else if (currentCategory === 'not') {
+                document.getElementById('icon-not').className = 'fa-solid fa-circle-check';
+                document.getElementById('option-not').style.backgroundColor = '#f0f7ff';
+            }
+            
+            document.getElementById('categoryModal').classList.add('show');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.remove('show');
+        }
+
+        // 체크박스 토글
+        function toggleTodo(todoId, currentCategory) {
+            console.log('toggleTodo called:', todoId, currentCategory);  // 디버깅
+            showCategoryModal(todoId, currentCategory);
+        }
+        
+        // 모달 외부 클릭
+        document.getElementById('addModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+        
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDetailModal();
+        });
+        
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+        
+        document.getElementById('logoutModal').addEventListener('click', function(e) {
+            if (e.target === this) closeLogoutModal();
+        });
+
+        document.getElementById('categoryModal').addEventListener('click', function(e) {
+            if (e.target === this) closeCategoryModal();
+        });
+    </script>
+</body>
+</html>
